@@ -14,7 +14,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Monoton&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
 
-
   <style>
     /* Reset + Base */
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -47,7 +46,7 @@
     }
     .logo:hover { transform: scale(1.05); }
 
-    /* Headline & subhead */
+    /* Subhead (if you ever re-add it) */
     h1 {
       font-family: 'Monoton', cursive;
       font-size: 4rem;
@@ -61,13 +60,40 @@
 </head>
 <body>
   <div class="container">
-    <!-- Logo from assets/logo.svg -->
-    <img class="logo" src="assets/logo.svg" alt="Strange Matter Logo">
+    <!--
+      α) The <img> has id="logo", so we can target it in JS.
+      β) Default src is logo.svg; on hover (JS) we’ll swap to comingsoon.svg.
+    -->
+    <img
+      id="logo"
+      class="logo"
+      src="assets/logo.svg"
+      alt="Strange Matter Logo"
+    >
 
-    <!-- Main headline -->
-    <!--<h1>Strange Matter</h1>-->
-
-    <!-- Subheading -->
+    <!-- (Optional subheading or other text can go here) -->
   </div>
+
+  <!--
+    3. JavaScript at the end of <body> that listens for mouseover/mouseout
+    and swaps `src` between logo.svg and comingsoon.svg.
+  -->
+  <script>
+    (() => {
+      const logoImg = document.getElementById('logo');
+      if (!logoImg) return;
+
+      // Paths (relative to index.html)
+      const originalSrc = 'assets/logo.svg';
+      const hoverSrc    = 'assets/comingsoon.svg';
+
+      logoImg.addEventListener('mouseenter', () => {
+        logoImg.src = hoverSrc;
+      });
+      logoImg.addEventListener('mouseleave', () => {
+        logoImg.src = originalSrc;
+      });
+    })();
+  </script>
 </body>
 </html>
