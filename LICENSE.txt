@@ -1,0 +1,5 @@
+Copyright © 2025 Strange Matter Films
+
+All rights reserved. No part of this repository’s contents (including but not limited to HTML, CSS, JavaScript, images, or other assets) may be reproduced, distributed, transmitted, displayed, published, or broadcast in any form or by any means, or incorporated into any other work, without the prior written permission of Strange Matter Films.
+
+For inquiries or licensing requests, please contact: mail@strangematterfilms.com
