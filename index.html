@@ -33,7 +33,6 @@
       justify-content: center;
       text-align: center;
       padding: 1rem;
-      transition: background-color 0.2s ease; /* smooth switch */
     }
 
     /* ───── Container fade-in ───── */
@@ -53,25 +52,11 @@
       margin-bottom: 2rem;
       cursor: pointer;
     }
-
-    /* If you ever re-add text under the logo */
-    h1 {
-      font-family: 'Monoton', cursive;
-      font-size: 4rem;
-      margin-bottom: 0.5rem;
-    }
-    p {
-      font-weight: 300;
-      font-size: 1.25rem;
-    }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- 
-      1) id="logo" so JS can target it.
-      2) Default src="logo.svg". On hover, JS swaps to comingsoon.svg.
-    -->
+    <!-- JS will swap this src on hover -->
     <img
       id="logo"
       class="logo"
@@ -87,14 +72,17 @@
 
       const originalSrc = 'assets/branding/logo.svg';
       const hoverSrc    = 'assets/branding/comingsoon.svg';
-      const originalBg  = '#360CCC';
-      const hoverBg     = '#000000';
 
-      // When the mouse enters the logo:
+      // Swap to comingsoon.svg on hover
       logoImg.addEventListener('mouseenter', () => {
         logoImg.src = hoverSrc;
-        document.body.style.backgroundColor = hoverBg;
       });
 
-      // When the mouse leaves the logo:
-     
+      // Revert back to logo.svg when mouse leaves
+      logoImg.addEventListener('mouseleave', () => {
+        logoImg.src = originalSrc;
+      });
+    })();
+  </script>
+</body>
+</html>
