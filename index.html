@@ -1,20 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
+<!-- rebuild: 2025-05-31 17:00 -->
 <head>
   <meta charset="UTF-8">
-  <title>Strange Matter — Coming Soon</title>
+  <title>Strange Matter</title>
 
   <!-- Favicon -->
   <link rel="icon" href="assets/branding/favicon.png" type="image/png">
 
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- Google Fonts -->
+  <!-- Load Google Fonts -->
   <link rel="preconnect" href="https://fonts.gstatic.com">
-  <link
-    href="https://fonts.googleapis.com/css2?family=Monoton&family=Space+Grotesk:wght@300;500;700&display=swap"
-    rel="stylesheet"
-  >
+  <link href="https://fonts.googleapis.com/css2?family=Monoton&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
 
   <style>
     /* ───── Reset + Base ───── */
@@ -37,11 +35,8 @@
       padding: 1rem;
     }
 
-    /* ───── Container & Glitch-Keyframes ───── */
+    /* ───── Container fade-in ───── */
     .container {
-      position: relative;
-      width: 300px; /* fix container width */
-      height: auto;
       opacity: 0;
       animation: fadeIn 1s forwards ease-in-out;
       animation-delay: 0.5s;
@@ -50,98 +45,44 @@
       to { opacity: 1; }
     }
 
-    /* ───── Layered Images ───── */
-    .logo-prev,
-    .logo-next {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: auto;
-      transition: opacity 0.3s ease;
-    }
-    /* Show only the “logo” by default */
-    .logo-prev {
-      opacity: 1;
-      z-index: 2;
-    }
-    .logo-next {
-      opacity: 0;
-      z-index: 1;
-    }
-
-    /* On hover, fade the coming-soon SVG in, logo out */
-    .container:hover .logo-prev {
-      opacity: 0;
-      animation: glitch 0.4s ease-in-out;
-    }
-    .container:hover .logo-next {
-      opacity: 1;
-    }
-
-    /* ───── Glitch Animation ───── */
-    @keyframes glitch {
-      0% {
-        clip: rect(10px, 9999px, 50px, 0);
-        transform: translate(-2px, -2px);
-      }
-      10% {
-        clip: rect(60px, 9999px, 100px, 0);
-        transform: translate(2px, 2px);
-      }
-      20% {
-        clip: rect(30px, 9999px, 80px, 0);
-        transform: translate(-2px, 2px);
-      }
-      30% {
-        clip: rect(80px, 9999px, 120px, 0);
-        transform: translate(2px, -2px);
-      }
-      40% {
-        clip: rect(50px, 9999px, 90px, 0);
-        transform: translate(-2px, -2px);
-      }
-      50% {
-        clip: rect(100px, 9999px, 140px, 0);
-        transform: translate(2px, 2px);
-      }
-      60% {
-        clip: rect(40px, 9999px, 80px, 0);
-        transform: translate(-2px, 2px);
-      }
-      70% {
-        clip: rect(90px, 9999px, 130px, 0);
-        transform: translate(2px, -2px);
-      }
-      80% {
-        clip: rect(20px, 9999px, 60px, 0);
-        transform: translate(-2px, -2px);
-      }
-      90% {
-        clip: rect(70px, 9999px, 110px, 0);
-        transform: translate(2px, 2px);
-      }
-      100% {
-        clip: rect(0px, 9999px, 300px, 0);
-        transform: translate(0, 0);
-      }
+    /* ───── Logo ───── */
+    .logo {
+      width: 300px !important;
+      height: auto !important;
+      margin-bottom: 2rem;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- Base logo (logo-prev) -->
+    <!-- JS will swap this src on hover -->
     <img
-      class="logo-prev"
+      id="logo"
+      class="logo"
       src="assets/branding/logo.svg"
       alt="Strange Matter Logo"
     >
-    <!-- Hover logo (logo-next) -->
-    <img
-      class="logo-next"
-      src="assets/branding/comingsoon.svg"
-      alt="Strange Matter Coming Soon"
-    >
   </div>
+
+  <script>
+    (function() {
+      const logoImg = document.getElementById('logo');
+      if (!logoImg) return;
+
+      const originalSrc = 'assets/branding/logo.svg';
+      const hoverSrc    = 'assets/branding/comingsoon.svg';
+
+      // Swap to comingsoon.svg on hover
+      logoImg.addEventListener('mouseenter', () => {
+        logoImg.src = hoverSrc;
+      });
+
+      // Revert back to logo.svg when mouse leaves
+      logoImg.addEventListener('mouseleave', () => {
+        logoImg.src = originalSrc;
+      });
+    })();
+  </script>
 </body>
 </html>
