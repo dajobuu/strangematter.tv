@@ -3,10 +3,7 @@
 <!-- rebuild: 2025-05-31 17:00 -->
 <head>
   <meta charset="UTF-8">
-  <title>Strange Matter</title>
-  <link rel="stylesheet" href="css/styles.css">
-  <script src="js/scripts.js"></script>
-
+  <title>Strange Matter — Coming Soon</title>
 
   <!-- Favicon -->
   <link rel="icon" href="assets/branding/favicon.png" type="image/png">
@@ -18,37 +15,46 @@
   <link href="https://fonts.googleapis.com/css2?family=Monoton&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
 
   <style>
-    /* Reset + Base */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    /* ───── Reset + Base ───── */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    html, body {
+      height: 100%;
+    }
     body {
       font-family: 'Space Grotesk', sans-serif;
-      background: #111;
+      background-color: #360CCC; /* intergalactic blue */
       color: #eee;
       display: flex;
       align-items: center;
       justify-content: center;
-      height: 100vh;
       text-align: center;
       padding: 1rem;
+      transition: background-color 0.2s ease; /* smooth switch */
     }
 
-    /* Container fade-in */
+    /* ───── Container fade-in ───── */
     .container {
       opacity: 0;
       animation: fadeIn 1s forwards ease-in-out;
       animation-delay: 0.5s;
     }
-    @keyframes fadeIn { to { opacity: 1; } }
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
 
-    /* Logo */
+    /* ───── Logo ───── */
     .logo {
-  width: 300px !important;
-  height: auto !important;
-  margin-bottom: 2rem;
-  cursor: pointer;
-}
-    
-    /* Subhead (if you ever re-add it) */
+      width: 300px !important;
+      height: auto !important;
+      margin-bottom: 2rem;
+      cursor: pointer;
+    }
+
+    /* If you ever re-add text under the logo */
     h1 {
       font-family: 'Monoton', cursive;
       font-size: 4rem;
@@ -62,9 +68,9 @@
 </head>
 <body>
   <div class="container">
-    <!--
-      α) The <img> has id="logo", so we can target it in JS.
-      β) Default src is logo.svg; on hover (JS) we’ll swap to comingsoon.svg.
+    <!-- 
+      1) id="logo" so JS can target it.
+      2) Default src="logo.svg". On hover, JS swaps to comingsoon.svg.
     -->
     <img
       id="logo"
@@ -72,28 +78,30 @@
       src="assets/branding/logo.svg"
       alt="Strange Matter Logo"
     >
-
-    <!-- (Optional subheading or other text can go here) -->
   </div>
 
-  <!--
-    3. JavaScript at the end of <body> that listens for mouseover/mouseout
-    and swaps `src` between logo.svg and comingsoon.svg.
-  -->
   <script>
-    (() => {
+    (function() {
       const logoImg = document.getElementById('logo');
       if (!logoImg) return;
 
-      // Paths (relative to index.html)
       const originalSrc = 'assets/branding/logo.svg';
       const hoverSrc    = 'assets/branding/comingsoon.svg';
+      const originalBg  = '#360CCC';
+      const hoverBg     = '#000000';
 
+      // When the mouse enters the logo:
       logoImg.addEventListener('mouseenter', () => {
         logoImg.src = hoverSrc;
+        document.body.style.backgroundColor = hoverBg;
       });
+
+      // When the mouse leaves the logo:
       logoImg.addEventListener('mouseleave', () => {
         logoImg.src = originalSrc;
+        document.body.style.backgroundColor = originalBg;
       });
     })();
-  </scrip
+  </script>
+</body>
+</html>
