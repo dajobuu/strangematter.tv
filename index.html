@@ -1,119 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
-<!-- rebuild: 2025-06-15 -->
 <head>
   <meta charset="UTF-8">
-  <title>Strange Matter</title>
-  <link rel="icon" href="assets/branding/favicon.png?v=2" type="image/png">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.gstatic.com">
-  <link
-    href="https://fonts.googleapis.com/css2?
-      family=Space+Grotesk:wght@300;500;700&
-      family=Space+Mono&display=swap"
-    rel="stylesheet"
-  >
-
-  <!-- GSAP for distortion animation -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.5/gsap.min.js"></script>
-
+  <title>StrangeMatter Particle Field</title>
+  <!-- Favicon: intergalactic blue triangle -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,10 90,90 10,90' fill='%2300b3ff'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@700&display=swap" rel="stylesheet">
   <style>
-    /* ─── Reset & Base ─── */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { height: 100%; }
-    body {
-      background-color: #000;
-      color: #eee;
-      font-family: 'Space Grotesk', sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 1rem;
-    }
-
-    /* ─── Fade‐In ─── */
-    .container {
-      opacity: 0;
-      animation: fadeIn 1s forwards ease-in-out;
-      animation-delay: 0.5s;
-    }
-    @keyframes fadeIn { to { opacity: 1; } }
-
-    /* ─── Logo ─── */
-    .logo {
-      font-family: 'Space Mono', monospace;
-      font-size: 2rem;
-      color: #360CCC;
-      cursor: pointer;
+    html, body { margin:0; padding:0; height:100%; background:#000; overflow:hidden; }
+    canvas { display:block; }
+    #overlay {
+      position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+      font-family:'Space Mono', monospace; font-size:12px; font-weight:bold;
+      color:#00b3ff; background:rgba(0,0,0,0.5);
+      padding:4px 8px; border-radius:4px;
+      pointer-events:none; user-select:none;
     }
   </style>
 </head>
-
 <body>
-  <!-- SVG Filter (exactly as on your main site) -->
-  <svg class="distort" style="position:absolute;width:0;height:0;pointer-events:none;">
-    <filter id="distortionFilter">
-      <feTurbulence
-        type="turbulence"
-        baseFrequency="2.01 .01"
-        numOctaves="1"
-        result="turbulence"
-      />
-      <feDisplacementMap
-        in="SourceGraphic"
-        in2="turbulence"
-        scale="0"
-        xChannelSelector="R"
-        yChannelSelector="G"
-      />
-    </filter>
-  </svg>
-
-  <div class="container">
-    <h1 id="logo" class="logo">StrangeMatter®</h1>
-  </div>
-
+  <canvas id="glcanvas"></canvas>
+  <div id="overlay">StrangeMatter®</div>
   <script>
-    (function() {
-      const logoEl = document.getElementById('logo');
-      if (!logoEl || !window.gsap) return;
+    const canvas = document.getElementById('glcanvas');
+    const gl = canvas.getContext('webgl');
+    if(!gl) { alert('WebGL not supported'); throw new Error('WebGL not supported'); }
 
-      // grab the template filter from above
-      const templateFilter = document.querySelector('svg.distort filter#distortionFilter');
-      if (!templateFilter) return;
+    // Cursor
+    const mouse = { x: NaN, y: NaN };
+    canvas.addEventListener('mousemove', e=>{ mouse.x=e.clientX; mouse.y=e.clientY; });
+    canvas.addEventListener('mouseleave', ()=>{ mouse.x=NaN; mouse.y=NaN; });
 
-      // clone it with a new id
-      const cloneId = 'distortionFilter-logo';
-      const clone = templateFilter.cloneNode(true);
-      clone.id = cloneId;
+    // Repulsion settings
+    const repulseRadius = 300;
+    const repulseStrength = 20.0;
 
-      // inject it into the DOM
-      const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
-      svg.setAttribute('style','position:absolute;width:0;height:0;pointer-events:none;');
-      svg.appendChild(clone);
-      document.body.appendChild(svg);
+    // Shader utilities
+    const compileShader=(src,type)=>{ const s=gl.createShader(type); gl.shaderSource(s,src); gl.compileShader(s); if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){ console.error(gl.getShaderInfoLog(s)); gl.deleteShader(s); return null; } return s; };
+    const createProgram=(vs,fs)=>{ const p=gl.createProgram(); gl.attachShader(p,compileShader(vs,gl.VERTEX_SHADER)); gl.attachShader(p,compileShader(fs,gl.FRAGMENT_SHADER)); gl.linkProgram(p); if(!gl.getProgramParameter(p,gl.LINK_STATUS)){ console.error(gl.getProgramInfoLog(p)); gl.deleteProgram(p); return null; } return p; };
 
-      // apply the filter to the logo
-      logoEl.style.filter = `url(#${cloneId})`;
+    // Fade quad
+    const fadeVS=`attribute vec2 a_position;void main(){gl_Position=vec4(a_position,0,1);}`;
+    const fadeFS=`precision mediump float;uniform float u_alpha;void main(){gl_FragColor=vec4(0,0,0,u_alpha);}`;
+    const fadeProgram=createProgram(fadeVS,fadeFS);
+    const fadePosLoc=gl.getAttribLocation(fadeProgram,'a_position');
+    const fadeAlphaLoc=gl.getUniformLocation(fadeProgram,'u_alpha');
+    const quadBuf=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,quadBuf);
+    gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
 
-      const dispSel = `#${cloneId} feDisplacementMap`;
-      const turbSel = `#${cloneId} feTurbulence`;
+    // Particle shaders
+    const partVS=`attribute vec2 a_position;uniform vec2 u_resolution;void main(){vec2 clip=(a_position/u_resolution)*2.-1.;gl_Position=vec4(clip*vec2(1,-1),0,1);gl_PointSize=2.0;}`;
+    const partFS=`precision mediump float;void main(){float d=length(gl_PointCoord-vec2(0.5));if(d>0.5)discard;gl_FragColor=vec4(0,0.7,1,1);}`;
+    const particleProgram=createProgram(partVS,partFS);
+    const posLoc=gl.getAttribLocation(particleProgram,'a_position');
+    const resLoc=gl.getUniformLocation(particleProgram,'u_resolution');
 
-      // hover in → ramp up distortion
-      logoEl.addEventListener('mouseenter', () => {
-        gsap.to(dispSel,   { duration: 0.8, attr: { scale: 60 },             ease: "circ.out" });
-        gsap.to(turbSel,   { duration: 0.8, attr: { baseFrequency: "2.05 .05" }, ease: "circ.out" });
-      });
+    // Resize
+    const resize=()=>{ canvas.width=innerWidth; canvas.height=innerHeight; gl.viewport(0,0,canvas.width,canvas.height); gl.useProgram(particleProgram); gl.uniform2f(resLoc,canvas.width,canvas.height); };
+    window.addEventListener('resize',resize);
+    resize();
 
-      // hover out → reset
-      logoEl.addEventListener('mouseleave', () => {
-        gsap.to(dispSel,   { duration: 0.8, attr: { scale: 0 },              ease: "circ.out" });
-        gsap.to(turbSel,   { duration: 0.8, attr: { baseFrequency: "2.01 .01" }, ease: "circ.out" });
-      });
-    })();
+    // Initialize particles
+    const NUM=10000;
+    const basePos=new Float32Array(NUM*2);
+    for(let i=0;i<NUM;i++){ basePos[2*i]=Math.random()*canvas.width; basePos[2*i+1]=Math.random()*canvas.height; }
+    const posBuf=gl.createBuffer();
+
+    // Noise & curl
+    class SimplexNoise{ constructor(r=Math){ this.p=new Uint8Array(256); for(let i=0;i<256;i++)this.p[i]=i; for(let i=0;i<255;i++){const j=i+Math.floor(r.random()*(256-i));[this.p[i],this.p[j]]=[this.p[j],this.p[i]];} this.perm=new Uint8Array(512); for(let i=0;i<512;i++)this.perm[i]=this.p[i&255]; } noise2D(x,y){ const P=this.perm,F2=0.5*(Math.sqrt(3)-1),G2=(3-Math.sqrt(3))/6; let s=(x+y)*F2,i=Math.floor(x+s),j=Math.floor(y+s),t=(i+j)*G2,X0=i-t,Y0=j-t,x0=x-X0,y0=y-Y0,i1=x0>y0?1:0,j1=x0>y0?0:1,x1=x0-i1+G2,y1=y0-j1+G2,x2=x0-1+2*G2,y2=y0-1+2*G2; i&=255; j&=255; const grad=(h,xx,yy)=>{const u=h&1?-xx:xx,v=h&2?-2*yy:2*yy;return(h&4)?-v:v+u;}; let n0=0,n1=0,n2=0,tt=0.5-x0*x0-y0*y0; if(tt>0){tt*=tt;n0=tt*tt*grad(P[i+P[j]],x0,y0);} tt=0.5-x1*x1-y1*y1; if(tt>0){tt*=tt;n1=tt*tt*grad(P[i+i1+P[j+j1]],x1,y1);} tt=0.5-x2*x2-y2*y2; if(tt>0){tt*=tt;n2=tt*tt*grad(P[i+1+P[j+1]],x2,y2);} return 70*(n0+n1+n2);} }
+    const noise=new SimplexNoise();
+    const noiseField=(x,y)=>{let sum=0,f=0.0005,a=1;for(let o=0;o<4;o++){sum+=a*noise.noise2D(x*f,y*f);f*=2;a*=0.5;}return sum;};
+    const curlNoise=(x,y)=>{const e=1,n1=noiseField(x,y+e),n2=noiseField(x,y-e),ax=(n1-n2)/(2*e),n3=noiseField(x+e,y),n4=noiseField(x-e,y),by=(n3-n4)/(2*e);return{x:ax,y:-by};};
+
+    // Animation
+    function animate(){
+      // fade
+      gl.useProgram(fadeProgram); gl.bindBuffer(gl.ARRAY_BUFFER,quadBuf); gl.enableVertexAttribArray(fadePosLoc); gl.vertexAttribPointer(fadePosLoc,2,gl.FLOAT,false,0,0);
+      gl.uniform1f(fadeAlphaLoc,0.05); gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA); gl.drawArrays(gl.TRIANGLES,0,6);
+
+      // compute positions
+      const drawPos=new Float32Array(NUM*2);
+      for(let i=0;i<NUM;i++){ const bx=basePos[2*i], by=basePos[2*i+1]; const c=curlNoise(bx,by); basePos[2*i]=bx+c.x; basePos[2*i+1]=by+c.y; let dxRep=0, dyRep=0; if(isFinite(mouse.x)&&isFinite(mouse.y)){ const dx=bx-mouse.x, dy=by-mouse.y, dist2=dx*dx+dy*dy; if(dist2<repulseRadius*repulseRadius){ const d=Math.sqrt(dist2)||1, t=(repulseRadius-d)/repulseRadius, f=Math.pow(t,4)*repulseStrength; dxRep=dx/d*f; dyRep=dy/d*f;} } drawPos[2*i]=bx+dxRep; drawPos[2*i+1]=by+dyRep; }
+
+      // draw
+      gl.bindBuffer(gl.ARRAY_BUFFER,posBuf); gl.bufferData(gl.ARRAY_BUFFER,drawPos,gl.DYNAMIC_DRAW); gl.useProgram(particleProgram);
+      gl.bindBuffer(gl.ARRAY_BUFFER,posBuf); gl.enableVertexAttribArray(posLoc); gl.vertexAttribPointer(posLoc,2,gl.FLOAT,false,0,0); gl.drawArrays(gl.POINTS,0,NUM);
+      requestAnimationFrame(animate);
+    }
+    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA); animate();
   </script>
 </body>
 </html>
