@@ -1,31 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
-<!-- rebuild: 2025-05-31 17:00 -->
+<!-- rebuild: 2025-06-15 -->
 <head>
   <meta charset="UTF-8">
   <title>Strange Matter</title>
   <link rel="icon" href="assets/branding/favicon.png?v=2" type="image/png">
-
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- Load Google Fonts -->
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.gstatic.com">
-  <link href="https://fonts.googleapis.com/css2?family=Monoton&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?
+      family=Space+Grotesk:wght@300;500;700&
+      family=Space+Mono&display=swap"
+    rel="stylesheet"
+  >
+
+  <!-- GSAP for distortion animation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.5/gsap.min.js"></script>
 
   <style>
-    /* ───── Reset + Base ───── */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    html, body {
-      height: 100%;
-    }
+    /* ─── Reset & Base ─── */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
     body {
-      font-family: 'Space Grotesk', sans-serif;
-      background-color: #000000; /* intergalactic blue */
+      background-color: #000;
       color: #eee;
+      font-family: 'Space Grotesk', sans-serif;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -33,52 +34,84 @@
       padding: 1rem;
     }
 
-    /* ───── Container fade-in ───── */
+    /* ─── Fade‐In ─── */
     .container {
       opacity: 0;
       animation: fadeIn 1s forwards ease-in-out;
       animation-delay: 0.5s;
     }
-    @keyframes fadeIn {
-      to { opacity: 1; }
-    }
+    @keyframes fadeIn { to { opacity: 1; } }
 
-    /* ───── Logo ───── */
+    /* ─── Logo ─── */
     .logo {
-      width: 300px !important;
-      height: auto !important;
-      margin-bottom: 0rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 5rem;
+      color: #360CCC;
       cursor: pointer;
     }
   </style>
 </head>
+
 <body>
+  <!-- SVG Filter (exactly as on your main site) -->
+  <svg class="distort" style="position:absolute;width:0;height:0;pointer-events:none;">
+    <filter id="distortionFilter">
+      <feTurbulence
+        type="turbulence"
+        baseFrequency="2.01 .01"
+        numOctaves="1"
+        result="turbulence"
+      />
+      <feDisplacementMap
+        in="SourceGraphic"
+        in2="turbulence"
+        scale="0"
+        xChannelSelector="R"
+        yChannelSelector="G"
+      />
+    </filter>
+  </svg>
+
   <div class="container">
-    <!-- JS will swap this src on hover -->
-    <img
-      id="logo"
-      class="logo"
-      src="assets/branding/logo.svg"
-      alt="Strange Matter Logo"
-    >
+    <h1 id="logo" class="logo">StrangeMatter®</h1>
   </div>
 
   <script>
     (function() {
-      const logoImg = document.getElementById('logo');
-      if (!logoImg) return;
+      const logoEl = document.getElementById('logo');
+      if (!logoEl || !window.gsap) return;
 
-      const originalSrc = 'assets/branding/logo.svg';
-      const hoverSrc    = 'assets/branding/comingsoon.svg';
+      // grab the template filter from above
+      const templateFilter = document.querySelector('svg.distort filter#distortionFilter');
+      if (!templateFilter) return;
 
-      // Swap to comingsoon.svg on hover
-      logoImg.addEventListener('mouseenter', () => {
-        logoImg.src = hoverSrc;
+      // clone it with a new id
+      const cloneId = 'distortionFilter-logo';
+      const clone = templateFilter.cloneNode(true);
+      clone.id = cloneId;
+
+      // inject it into the DOM
+      const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+      svg.setAttribute('style','position:absolute;width:0;height:0;pointer-events:none;');
+      svg.appendChild(clone);
+      document.body.appendChild(svg);
+
+      // apply the filter to the logo
+      logoEl.style.filter = `url(#${cloneId})`;
+
+      const dispSel = `#${cloneId} feDisplacementMap`;
+      const turbSel = `#${cloneId} feTurbulence`;
+
+      // hover in → ramp up distortion
+      logoEl.addEventListener('mouseenter', () => {
+        gsap.to(dispSel,   { duration: 0.8, attr: { scale: 60 },             ease: "circ.out" });
+        gsap.to(turbSel,   { duration: 0.8, attr: { baseFrequency: "2.05 .05" }, ease: "circ.out" });
       });
 
-      // Revert back to logo.svg when mouse leaves
-      logoImg.addEventListener('mouseleave', () => {
-        logoImg.src = originalSrc;
+      // hover out → reset
+      logoEl.addEventListener('mouseleave', () => {
+        gsap.to(dispSel,   { duration: 0.8, attr: { scale: 0 },              ease: "circ.out" });
+        gsap.to(turbSel,   { duration: 0.8, attr: { baseFrequency: "2.01 .01" }, ease: "circ.out" });
       });
     })();
   </script>
