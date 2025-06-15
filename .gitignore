@@ -1,2 +1,12 @@
 .DS_Store
 .DS_Store
+# system & editor
+.DS_Store
+*.log
+
+# build / artifacts
+node_modules/
+js/
+
+# OS files
+._*                  # macOS resource forks
