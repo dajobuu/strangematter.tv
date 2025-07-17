@@ -1,93 +1,406 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>StrangeMatter｜Coming Soon</title>
-  <!-- Favicon: intergalactic blue triangle -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,10 90,90 10,90' fill='%2300b3ff'/></svg>">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@700&display=swap" rel="stylesheet">
-  <style>
-    html, body { margin:0; padding:0; height:100%; background:#000; overflow:hidden; }
-    canvas { display:block; }
-    #overlay {
-      position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-      font-family:'Space Mono', monospace; font-size:12px; font-weight:bold;
-      color:#00b3ff; background:rgba(0,0,0,0.5);
-      padding:4px 8px; border-radius:4px;
-      pointer-events:none; user-select:none;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strange Matter - Coming Soon</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23CEFF00'/%3E%3C/svg%3E" type="image/svg+xml">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #D9D9D9;
+            font-family: 'DM Mono', monospace;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        #lava-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .marquee-container {
+            overflow: hidden;
+            white-space: nowrap;
+            padding: 10px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .top-marquee {
+            background-color: black;
+            color: white;
+            font-weight: 500;
+            font-size: 15px;
+            text-transform: lowercase;
+        }
+
+        .bottom-marquee {
+            background-color: #CEFF00;
+            color: black;
+            font-weight: 500;
+            font-size: 15px;
+            text-transform: lowercase;
+            border: 1.5px solid black;
+            margin-top: auto;
+        }
+
+        .marquee-text {
+            display: inline-block;
+            animation: scroll-left 120s linear infinite;
+        }
+
+        @keyframes scroll-left {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .logo {
+            height: 10vh;
+            max-height: 100px;
+            width: auto;
+        }
+
+        /* Placeholder for when logo is replaced with PNG */
+        .logo-placeholder {
+            font-size: 4rem;
+            font-weight: bold;
+            color: black;
+            text-align: center;
+            font-family: 'DM Mono', monospace;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .top-marquee, .bottom-marquee {
+                font-size: 13px;
+                padding: 8px;
+            }
+            
+            .logo-placeholder {
+                font-size: 3rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .top-marquee, .bottom-marquee {
+                font-size: 11px;
+                padding: 6px;
+            }
+            
+            .logo-placeholder {
+                font-size: 2rem;
+            }
+        }
+    </style>
 </head>
 <body>
-  <canvas id="glcanvas"></canvas>
-  <div id="overlay">StrangeMatter®</div>
-  <script>
-    const canvas = document.getElementById('glcanvas');
-    const gl = canvas.getContext('webgl');
-    if(!gl) { alert('WebGL not supported'); throw new Error('WebGL not supported'); }
+    <canvas id="lava-canvas"></canvas>
+    
+    <div class="marquee-container top-marquee">
+        <div class="marquee-text" id="top-marquee-text"></div>
+    </div>
 
-    // Cursor
-    const mouse = { x: NaN, y: NaN };
-    canvas.addEventListener('mousemove', e=>{ mouse.x=e.clientX; mouse.y=e.clientY; });
-    canvas.addEventListener('mouseleave', ()=>{ mouse.x=NaN; mouse.y=NaN; });
+    <div class="main-content">
+        <!-- Replace this img src with your local PNG file path -->
+        <img src="logo.png" alt="Strange Matter Logo" class="logo" style="display: none;">
+        <!-- Remove this div when you add your PNG logo -->
+        <div class="logo-placeholder">S ///</div>
+    </div>
 
-    // Repulsion settings
-    const repulseRadius = 300;
-    const repulseStrength = 20.0;
+    <div class="marquee-container bottom-marquee">
+        <div class="marquee-text" id="bottom-marquee-text"></div>
+    </div>
 
-    // Shader utilities
-    const compileShader=(src,type)=>{ const s=gl.createShader(type); gl.shaderSource(s,src); gl.compileShader(s); if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){ console.error(gl.getShaderInfoLog(s)); gl.deleteShader(s); return null; } return s; };
-    const createProgram=(vs,fs)=>{ const p=gl.createProgram(); gl.attachShader(p,compileShader(vs,gl.VERTEX_SHADER)); gl.attachShader(p,compileShader(fs,gl.FRAGMENT_SHADER)); gl.linkProgram(p); if(!gl.getProgramParameter(p,gl.LINK_STATUS)){ console.error(gl.getProgramInfoLog(p)); gl.deleteProgram(p); return null; } return p; };
-
-    // Fade quad
-    const fadeVS=`attribute vec2 a_position;void main(){gl_Position=vec4(a_position,0,1);}`;
-    const fadeFS=`precision mediump float;uniform float u_alpha;void main(){gl_FragColor=vec4(0,0,0,u_alpha);}`;
-    const fadeProgram=createProgram(fadeVS,fadeFS);
-    const fadePosLoc=gl.getAttribLocation(fadeProgram,'a_position');
-    const fadeAlphaLoc=gl.getUniformLocation(fadeProgram,'u_alpha');
-    const quadBuf=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,quadBuf);
-    gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
-
-    // Particle shaders
-    const partVS=`attribute vec2 a_position;uniform vec2 u_resolution;void main(){vec2 clip=(a_position/u_resolution)*2.-1.;gl_Position=vec4(clip*vec2(1,-1),0,1);gl_PointSize=2.0;}`;
-    const partFS=`precision mediump float;void main(){float d=length(gl_PointCoord-vec2(0.5));if(d>0.5)discard;gl_FragColor=vec4(0,0.7,1,1);}`;
-    const particleProgram=createProgram(partVS,partFS);
-    const posLoc=gl.getAttribLocation(particleProgram,'a_position');
-    const resLoc=gl.getUniformLocation(particleProgram,'u_resolution');
-
-    // Resize
-    const resize=()=>{ canvas.width=innerWidth; canvas.height=innerHeight; gl.viewport(0,0,canvas.width,canvas.height); gl.useProgram(particleProgram); gl.uniform2f(resLoc,canvas.width,canvas.height); };
-    window.addEventListener('resize',resize);
-    resize();
-
-    // Initialize particles
-    const NUM=10000;
-    const basePos=new Float32Array(NUM*2);
-    for(let i=0;i<NUM;i++){ basePos[2*i]=Math.random()*canvas.width; basePos[2*i+1]=Math.random()*canvas.height; }
-    const posBuf=gl.createBuffer();
-
-    // Noise & curl
-    class SimplexNoise{ constructor(r=Math){ this.p=new Uint8Array(256); for(let i=0;i<256;i++)this.p[i]=i; for(let i=0;i<255;i++){const j=i+Math.floor(r.random()*(256-i));[this.p[i],this.p[j]]=[this.p[j],this.p[i]];} this.perm=new Uint8Array(512); for(let i=0;i<512;i++)this.perm[i]=this.p[i&255]; } noise2D(x,y){ const P=this.perm,F2=0.5*(Math.sqrt(3)-1),G2=(3-Math.sqrt(3))/6; let s=(x+y)*F2,i=Math.floor(x+s),j=Math.floor(y+s),t=(i+j)*G2,X0=i-t,Y0=j-t,x0=x-X0,y0=y-Y0,i1=x0>y0?1:0,j1=x0>y0?0:1,x1=x0-i1+G2,y1=y0-j1+G2,x2=x0-1+2*G2,y2=y0-1+2*G2; i&=255; j&=255; const grad=(h,xx,yy)=>{const u=h&1?-xx:xx,v=h&2?-2*yy:2*yy;return(h&4)?-v:v+u;}; let n0=0,n1=0,n2=0,tt=0.5-x0*x0-y0*y0; if(tt>0){tt*=tt;n0=tt*tt*grad(P[i+P[j]],x0,y0);} tt=0.5-x1*x1-y1*y1; if(tt>0){tt*=tt;n1=tt*tt*grad(P[i+i1+P[j+j1]],x1,y1);} tt=0.5-x2*x2-y2*y2; if(tt>0){tt*=tt;n2=tt*tt*grad(P[i+1+P[j+1]],x2,y2);} return 70*(n0+n1+n2);} }
-    const noise=new SimplexNoise();
-    const noiseField=(x,y)=>{let sum=0,f=0.0005,a=1;for(let o=0;o<4;o++){sum+=a*noise.noise2D(x*f,y*f);f*=2;a*=0.5;}return sum;};
-    const curlNoise=(x,y)=>{const e=1,n1=noiseField(x,y+e),n2=noiseField(x,y-e),ax=(n1-n2)/(2*e),n3=noiseField(x+e,y),n4=noiseField(x-e,y),by=(n3-n4)/(2*e);return{x:ax,y:-by};};
-
-    // Animation
-    function animate(){
-      // fade
-      gl.useProgram(fadeProgram); gl.bindBuffer(gl.ARRAY_BUFFER,quadBuf); gl.enableVertexAttribArray(fadePosLoc); gl.vertexAttribPointer(fadePosLoc,2,gl.FLOAT,false,0,0);
-      gl.uniform1f(fadeAlphaLoc,0.05); gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA); gl.drawArrays(gl.TRIANGLES,0,6);
-
-      // compute positions
-      const drawPos=new Float32Array(NUM*2);
-      for(let i=0;i<NUM;i++){ const bx=basePos[2*i], by=basePos[2*i+1]; const c=curlNoise(bx,by); basePos[2*i]=bx+c.x; basePos[2*i+1]=by+c.y; let dxRep=0, dyRep=0; if(isFinite(mouse.x)&&isFinite(mouse.y)){ const dx=bx-mouse.x, dy=by-mouse.y, dist2=dx*dx+dy*dy; if(dist2<repulseRadius*repulseRadius){ const d=Math.sqrt(dist2)||1, t=(repulseRadius-d)/repulseRadius, f=Math.pow(t,4)*repulseStrength; dxRep=dx/d*f; dyRep=dy/d*f;} } drawPos[2*i]=bx+dxRep; drawPos[2*i+1]=by+dyRep; }
-
-      // draw
-      gl.bindBuffer(gl.ARRAY_BUFFER,posBuf); gl.bufferData(gl.ARRAY_BUFFER,drawPos,gl.DYNAMIC_DRAW); gl.useProgram(particleProgram);
-      gl.bindBuffer(gl.ARRAY_BUFFER,posBuf); gl.enableVertexAttribArray(posLoc); gl.vertexAttribPointer(posLoc,2,gl.FLOAT,false,0,0); gl.drawArrays(gl.POINTS,0,NUM);
-      requestAnimationFrame(animate);
-    }
-    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA); animate();
-  </script>
+    <script>
+        // Top marquee text
+        const topText = "we are an artist-led generative AI studio driven by our passion for storytelling and experimentation. we reimagine visuals for ads, branded content, and music videos.";
+        const topMarqueeElement = document.getElementById('top-marquee-text');
+        
+        // Bottom marquee text
+        const bottomText = "site coming soon";
+        const bottomMarqueeElement = document.getElementById('bottom-marquee-text');
+        
+        // Create infinitely repeating text for seamless scroll
+        function createInfiniteMarquee(text, element) {
+            const separator = " /// ";
+            // Create exactly double the text needed for smooth infinite loop
+            const repeatedText = Array(100).fill(text).join(separator) + separator + Array(100).fill(text).join(separator);
+            element.textContent = repeatedText;
+        }
+        
+        // Initialize marquees
+        createInfiniteMarquee(topText, topMarqueeElement);
+        createInfiniteMarquee(bottomText, bottomMarqueeElement);
+        
+        // Set consistent speed for both marquees based on text length
+        function setMarqueeSpeed() {
+            const topTextWidth = topMarqueeElement.scrollWidth;
+            const bottomTextWidth = bottomMarqueeElement.scrollWidth;
+            
+            // Calculate duration to make both scroll at same visual speed
+            // Slowed down by another 20% (0.135 -> 0.108 pixels per millisecond)
+            const baseSpeed = 0.108; // pixels per millisecond (20% slower)
+            const topDuration = (topTextWidth / 2) / baseSpeed / 1000; // divide by 2 because we animate to -50%
+            const bottomDuration = (bottomTextWidth / 2) / baseSpeed / 1000;
+            
+            topMarqueeElement.style.animationDuration = topDuration + 's';
+            bottomMarqueeElement.style.animationDuration = bottomDuration + 's';
+        }
+        
+        // Set speed after text is loaded
+        setTimeout(setMarqueeSpeed, 100);
+        
+        // Lava lamp animation
+        const canvas = document.getElementById("lava-canvas");
+        const ctx = canvas.getContext("2d");
+        
+        // Make canvas responsive
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        const blobColor = "#CEFF00";
+        const bgColor = "#D9D9D9";
+        
+        class Blob {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                
+                // More varied size distribution with fewer very small blobs
+                const sizeRandom = Math.random();
+                if (sizeRandom < 0.3) {
+                    // 30% chance: Small blobs (8-18px) - reduced from 60%
+                    this.radius = 8 + Math.random() * 10;
+                } else if (sizeRandom < 0.55) {
+                    // 25% chance: Small-medium blobs (18-28px)
+                    this.radius = 18 + Math.random() * 10;
+                } else if (sizeRandom < 0.75) {
+                    // 20% chance: Medium blobs (28-42px)
+                    this.radius = 28 + Math.random() * 14;
+                } else if (sizeRandom < 0.88) {
+                    // 13% chance: Medium-large blobs (42-58px)
+                    this.radius = 42 + Math.random() * 16;
+                } else if (sizeRandom < 0.96) {
+                    // 8% chance: Large blobs (58-72px)
+                    this.radius = 58 + Math.random() * 14;
+                } else {
+                    // 4% chance: Very large blobs (72-85px)
+                    this.radius = 72 + Math.random() * 13;
+                }
+                
+                this.heat = 0.5 + Math.random() * 0.5; // Variable starting heat
+                this.baseSpeed = 0.2 + Math.random() * 0.8; // Different base speeds
+                this.vy = (Math.random() - 0.5) * 2; // Random initial direction
+                this.vx = (Math.random() - 0.5) * 0.3;
+                this.phase = Math.random() > 0.5 ? 'rising' : 'falling';
+            }
+            
+            reset() {
+                // This method is no longer used - phase switching happens in update()
+            }
+            
+            update() {
+                // Handle different phases with clearer logic
+                if (this.phase === 'rising') {
+                    // Maintain upward velocity while heated
+                    if (this.heat > 0) {
+                        this.vy = -this.baseSpeed * this.heat; // Negative = upward
+                        this.heat -= 0.0005; // Slow heat loss
+                    } else {
+                        // Out of heat, switch to falling
+                        this.phase = 'falling';
+                        this.vy = 0.05; // Start falling slowly
+                    }
+                    
+                    // Also switch to falling if hit the top
+                    if (this.y <= this.radius) {
+                        this.phase = 'falling';
+                        this.vy = 0.05;
+                        this.y = this.radius;
+                        this.heat = 0;
+                    }
+                    
+                } else { // falling phase
+                    // Accelerate downward
+                    this.vy += 0.01;
+                    
+                    // Switch to rising when hitting bottom
+                    if (this.y >= canvas.height - this.radius) {
+                        this.phase = 'rising';
+                        this.heat = 0.8 + Math.random() * 0.4; // Full reheat
+                        this.baseSpeed = 0.3 + Math.random() * 0.7; // New speed
+                        this.y = canvas.height - this.radius; // Keep at bottom
+                        this.vy = -this.baseSpeed; // Start rising immediately
+                    }
+                }
+                
+                // Apply movement
+                this.y += this.vy;
+                this.x += this.vx;
+                
+                // Apply light drag
+                this.vy *= 0.99;
+                this.vx *= 0.98;
+                
+                // Keep horizontal bounds with bouncing
+                if (this.x < this.radius || this.x > canvas.width - this.radius) {
+                    this.vx *= -0.7;
+                    this.x = Math.max(this.radius, Math.min(canvas.width - this.radius, this.x));
+                }
+                
+                // Collision detection with other blobs
+                this.handleCollisions();
+            }
+            
+            handleCollisions() {
+                blobs.forEach(other => {
+                    if (other === this) return;
+                    
+                    const dx = other.x - this.x;
+                    const dy = other.y - this.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const minDistance = this.radius + other.radius + 2; // Small buffer
+                    
+                    if (distance < minDistance && distance > 0) {
+                        // Normalize direction vector
+                        const nx = dx / distance;
+                        const ny = dy / distance;
+                        
+                        // Calculate overlap
+                        const overlap = minDistance - distance;
+                        
+                        // Calculate mass-based separation (larger blobs move less)
+                        const totalMass = this.radius + other.radius;
+                        const thisMass = this.radius / totalMass;
+                        const otherMass = other.radius / totalMass;
+                        
+                        // Separate blobs based on mass
+                        const separationForce = overlap * 0.6;
+                        this.x -= nx * separationForce * otherMass;
+                        this.y -= ny * separationForce * otherMass;
+                        other.x += nx * separationForce * thisMass;
+                        other.y += ny * separationForce * thisMass;
+                        
+                        // Calculate relative velocity
+                        const relativeVx = other.vx - this.vx;
+                        const relativeVy = other.vy - this.vy;
+                        
+                        // Calculate relative velocity along collision normal
+                        const velAlongNormal = relativeVx * nx + relativeVy * ny;
+                        
+                        // Don't resolve if velocities are separating
+                        if (velAlongNormal > 0) return;
+                        
+                        // Calculate restitution (bounciness)
+                        const restitution = 0.4;
+                        
+                        // Calculate impulse scalar
+                        let impulse = -(1 + restitution) * velAlongNormal;
+                        impulse /= (1/this.radius + 1/other.radius); // Mass-based
+                        
+                        // Apply impulse with rolling effect
+                        const impulseX = impulse * nx * 0.5; // Reduced for more rolling
+                        const impulseY = impulse * ny * 0.3; // Less vertical bounce
+                        
+                        // Apply rolling forces - blobs slide around each other
+                        const tangentX = -ny; // Perpendicular to normal
+                        const tangentY = nx;
+                        
+                        // Add rolling/sliding motion
+                        const rollForce = 0.1;
+                        const slidingVx = tangentX * rollForce * Math.sign(relativeVx);
+                        const slidingVy = tangentY * rollForce * Math.sign(relativeVy);
+                        
+                        // Apply forces
+                        this.vx -= (impulseX / this.radius) + slidingVx;
+                        this.vy -= (impulseY / this.radius) + slidingVy;
+                        other.vx += (impulseX / other.radius) - slidingVx;
+                        other.vy += (impulseY / other.radius) - slidingVy;
+                        
+                        // Add some randomness to prevent stacking
+                        const randomForce = 0.05;
+                        this.vx += (Math.random() - 0.5) * randomForce;
+                        other.vx += (Math.random() - 0.5) * randomForce;
+                    }
+                });
+            }
+            
+            draw() {
+                // Draw blob with black border
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = blobColor;
+                ctx.fill();
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+        }
+        
+        // Create 90 blobs randomly distributed across the screen (64 * 1.4 = 89.6, rounded to 90)
+        const blobs = [];
+        
+        // Create 89 regular blobs with varied sizes
+        for (let i = 0; i < 89; i++) {
+            blobs.push(new Blob());
+        }
+        
+        // Create 1 giant blob
+        const giantBlob = new Blob();
+        giantBlob.radius = 100 + Math.random() * 20; // 100-120px - much larger than max 85px
+        giantBlob.baseSpeed = 0.1 + Math.random() * 0.3; // Slower due to size
+        blobs.push(giantBlob);
+        
+        function animate() {
+            // Clear canvas with background color
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Update and draw blobs
+            blobs.forEach(blob => {
+                blob.update();
+                blob.draw();
+            });
+            
+            requestAnimationFrame(animate);
+        }
+        
+        // Start animation
+        animate();
+    </script>
 </body>
 </html>
